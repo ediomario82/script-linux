@@ -1,0 +1,14 @@
+create ssh-key github
+
+# se não existir criar o diretorio .ssh
+mkdir ~/.ssh
+
+# executar o comando para criar a chave
+ssh-keygen -t rsa -b 4096 -C your@email.com
+ou
+ssh-keygen -t ed25519 -C "your_email@example.com"
+
+testar execução do ssh agent
+eval "$(ssh-agent -s)"
+
+
