@@ -4,7 +4,7 @@ create ssh-key github
 mkdir ~/.ssh
 
 # executar o comando para criar a chave
-ssh-keygen -t rsa -b 4096 -C your@email.com
+ssh-keygen -t rsa -b 4096 -C your@email.com -f user_name
 ou
 ssh-keygen -t ed25519 -C "your_email@example.com"
 
