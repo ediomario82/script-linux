@@ -8,7 +8,7 @@ ssh-keygen -t rsa -C "your@email.com" -f user_name
 
 ssh-keygen -t rsa -b 4096 -C "your@email.com" -f user_name
 ou
-ssh-keygen -t ed25519 -C "your_email@example.com"
+ssh-keygen -t ed25519 -C "your_email@example.com" -f user_name
 
 testar execução do ssh agent
 eval "$(ssh-agent -s)"
