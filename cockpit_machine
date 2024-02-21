@@ -1,0 +1,10 @@
+#Install Cockpit-Machines and Enable Virtualization
+
+sudo dnf install cockpit-machines
+
+#Install Oracle Linux Virtualization packages (if not already installed on host system).
+  sudo dnf group install "Virtualization Host"
+  sudo dnf install qemu-kvm virt-install virt-viewer
+  
+#Verify that the Virtualization service is started on host system. Type:
+  sudo virt-host-validate qemu
