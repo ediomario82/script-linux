@@ -8,3 +8,4 @@ sudo dnf install cockpit-machines
   
 #Verify that the Virtualization service is started on host system. Type:
   sudo virt-host-validate qemu
+  sudo dnf install libvirt -y
