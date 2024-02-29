@@ -1,0 +1,81 @@
+#Comandos
+#Gerenciar VMs na CLI
+
+qm list = lista todas as VMs instaladas
+qm status <vmid> = mosta o estado da VM
+qm stop <vmid> = parar VM
+qm reboot <vmid> = reiniciar VM
+qm shutdown <vmid> = desliga VM
+qm start <vmid> = inicia VM
+qm clone <vmid> <newid> = clonar VM
+qm destroy <vmid> = excluir VM
+
+#Visualizar configuração das VMs na CLI
+
+cat /etc/pve/qemu-server/vmid.conf
+
+#Converter arquivo ova para qcow2 
+#Enviar arquivo via ssh
+
+scp .\minhavm.ova root@192.168.xx.xx:/tmp/
+
+#Acesso a pasta temp
+
+cd /tmp
+
+#Descompactar aquivo .ova 
+
+tar xvf minhavm.ova
+
+#Converter arquivo .ovf em uma VM 
+#esse metodo ja cria uma vm no proxmo necessario escolher a ID da vm pra funcionar.
+
+qm importovf 101 ./minhavm.ovf local-lvm --format qcow2
+
+#Converter o disco .vmdk em qcow2
+#nesse caso precisa criar uma vm manualmete e atribuir um ID identica a usada no comando abaixo.
+
+qm importdisk 101 ./minhavm.vmdk local-lvm --format qcow2
+
+#Converter IDE para SCSI
+dracut -v --force --add-drivers "virtio_balloon virtio_ring virtio_input virtio_pci virtio_blk virtio_net virtio_scsi virtio virtio_console"
+
+Backup VM Proxmox
+100=numero da VM que sera feito backup | /var/lib/vz/dump/=diretorio onde sera salvo o backup da VM
+
+para backup de varias VMs usar virgula enter os ID das VM ex: vzdump 100,101,102,103
+
+#Comando para realizar backup VM
+vzdump 100 --dumpdir /var/lib/vz/dump/ --mode snapshot -mailto engenharia@linktelwifi.com -compress zstd
+
+#Restore VM Proxmox
+
+100=pode ser qalquer ID para criar VM desde de que não esteja em uso
+
+vzdump-qemu-100-2024_02_28-15_27_51.vma.zst = arquivo de backup da VM
+
+-storage hdd-vm = disco local onde sera instalado a VM
+
+#Comanado para restaurar backup VM
+
+qmrestore vzdump-qemu-100-2024_02_28-15_27_51.vma.zst 100 -storage hdd-vm
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
