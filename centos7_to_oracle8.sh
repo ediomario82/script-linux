@@ -6,7 +6,7 @@ yum upgrade -y
 
 #instalar o pacote “elevate-release”
 
-yum -y install http://repo.almalinux.org/elevate/elevate-release-latest-el$(rpm --eval %rhel).noarch.rpm
+yum -y install http://repo.almalinux.org/elevate/elevate-release-latest-el7.noarch.rpm
 
 #instalar o pacote “leapp”
 
