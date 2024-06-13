@@ -2,7 +2,7 @@
 
 #atualização do sistema atual
 
-yum upgrade --refresh -y
+yum upgrade -y
 
 #instalar o pacote “elevate-release”
 
