@@ -1,0 +1,89 @@
+#!/bin/bash
+
+# Este script configura regras de firewall no Mikrotik para mitigar ataques DDoS de amplificação e implementar um conjunto abrangente de regras de segurança.
+
+# Passo a passo para aplicar as regras:
+# 1. Acesse o terminal do Mikrotik.
+# 2. Copie cada uma das linhas de comando abaixo e cole no terminal do Mikrotik.
+# 3. As regras serão aplicadas automaticamente para proteger contra ataques de amplificação DDoS, limitar o acesso a serviços vulneráveis e melhorar a segurança geral do roteador.
+# 4. Monitore o desempenho e ajuste as regras conforme necessário.
+
+# 1. Fasttrack Established and Related Connections
+/ip firewall filter add chain=forward action=fasttrack-connection connection-state=established,related comment="Fasttrack for established and related connections"
+/ip firewall filter add chain=forward action=accept connection-state=established,related comment="Accept established and related connections"
+
+# 2. Drop Invalid Packets
+/ip firewall filter add chain=input action=drop connection-state=invalid comment="Drop invalid packets"
+/ip firewall filter add chain=forward action=drop connection-state=invalid comment="Drop invalid forwarded packets"
+
+# 3. Accept Established and Related Connections (Input)
+/ip firewall filter add chain=input action=accept connection-state=established,related comment="Accept established and related connections"
+
+# 4. Limitar Novas Conexões para Prevenir SYN Flood
+/ip firewall filter add chain=input action=drop protocol=tcp tcp-flags=syn connection-limit=30,32 comment="Drop excess SYN packets to prevent SYN flood"
+
+# 5. Limitar Requisições ICMP para Prevenir ICMP Flooding
+/ip firewall filter add chain=input action=accept protocol=icmp limit=10,5:packet comment="Accept limited ICMP requests"
+/ip firewall filter add chain=input action=drop protocol=icmp comment="Drop excessive ICMP requests"
+
+# 6. Bloquear Amplificação NTP (Porta 123 UDP)
+/ip firewall filter add chain=input action=drop protocol=udp dst-port=123 comment="Drop NTP amplification attacks"
+
+# 7. Bloquear Amplificação SSDP (Porta 1900 UDP)
+/ip firewall filter add chain=input action=drop protocol=udp dst-port=1900 comment="Drop SSDP amplification attacks"
+
+# 8. Bloquear Amplificação CLDAP (Porta 389 UDP)
+/ip firewall filter add chain=input action=drop protocol=udp dst-port=389 comment="Drop CLDAP amplification attacks"
+
+# 9. Bloquear Amplificação TFTP (Porta 69 UDP)
+/ip firewall filter add chain=input action=drop protocol=udp dst-port=69 comment="Drop TFTP amplification attacks"
+
+# 10. Bloquear Amplificação Portmap/RPC (Porta 111 UDP)
+/ip firewall filter add chain=input action=drop protocol=udp dst-port=111 comment="Drop Portmap amplification attacks"
+
+# 11. Bloquear Amplificação CHARGEN (Porta 19 UDP)
+/ip firewall filter add chain=input action=drop protocol=udp dst-port=19 comment="Drop CHARGEN amplification attacks"
+
+# 12. Bloquear Amplificação NetBIOS (Portas 137-138 UDP)
+/ip firewall filter add chain=input action=drop protocol=udp dst-port=137-138 comment="Drop NetBIOS amplification attacks"
+
+# 13. Permitir Consultas DNS Locais (Porta 53 UDP)
+/ip firewall filter add chain=input action=accept protocol=udp dst-port=53 src-address-list=LOCAL comment="Allow local DNS requests"
+
+# 14. Bloquear Consultas DNS de Origem Não Local
+/ip firewall filter add chain=input action=drop protocol=udp dst-port=53 comment="Drop non-local DNS requests to prevent DNS amplification"
+
+# 15. Detectar e Bloquear Scanners de Porta
+/ip firewall filter add chain=input action=add-src-to-address-list address-list=port_scanners address-list-timeout=2w protocol=tcp psd=21,3s,3,1 comment="Detect Port Scanners"
+/ip firewall filter add chain=input action=drop src-address-list=port_scanners comment="Drop packets from port scanners"
+
+# 16. Bloquear Tráfego de Endereços Bogon
+/ip firewall filter add chain=input action=drop src-address-list=bogons comment="Drop traffic from bogon addresses"
+
+# 17. Bloquear Conexões Novas Excessivas (Mitigação de DDoS)
+/ip firewall filter add chain=input action=add-src-to-address-list address-list=blocked_ddos address-list-timeout=1h connection-limit=20,32 protocol=tcp comment="Block excessive new connections"
+/ip firewall filter add chain=input action=drop src-address-list=blocked_ddos comment="Drop packets from blocked DDoS addresses"
+
+# 18. Limitar Acesso SSH
+/ip firewall filter add chain=input action=accept protocol=tcp dst-port=22 connection-state=new limit=5,10:packet comment="Limit SSH access rate"
+/ip firewall filter add chain=input action=drop protocol=tcp dst-port=22 comment="Drop excessive SSH attempts"
+
+# 19. Permitir Acesso de Gerenciamento de Redes Confiáveis
+/ip firewall filter add chain=input action=accept src-address-list=LOCAL comment="Allow management access from trusted networks"
+/ip firewall filter add chain=input action=drop comment="Drop all other access to router"
+
+# 20. Definir Listas de Endereços
+/ip firewall address-list add address=192.168.0.0/16 list=LOCAL
+/ip firewall address-list add address=10.0.0.0/8 list=LOCAL
+/ip firewall address-list add address=172.16.0.0/12 list=LOCAL
+/ip firewall address-list add address=45.235.84.0/22 list=LOCAL
+/ip firewall address-list add address=100.64.0.0/10 list=LOCAL
+/ip firewall address-list add address=0.0.0.0/8 comment="Self Identification" list=bogons
+/ip firewall address-list add address=127.0.0.0/8 comment=Loopback list=bogons
+/ip firewall address-list add address=169.254.0.0/16 comment="Link Local" list=bogons
+/ip firewall address-list add address=192.0.2.0/24 comment="TEST-NET-1, Documentation" list=bogons
+/ip firewall address-list add address=198.18.0.0/15 comment="Network Interconnect Testing" list=bogons
+/ip firewall address-list add address=224.0.0.0/4 comment=Multicast list=bogons
+/ip firewall address-list add address=240.0.0.0/4 comment="Reserved for Future Use" list=bogons
+/ip firewall address-list add address=192.168.0.0/16 list=ICMP-Rede_local
+/ip firewall address-list add address=10.0.0.0/8 list=ICMP-Rede_local
