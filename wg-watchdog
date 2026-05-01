@@ -1,0 +1,167 @@
+Aqui está um shell script simples e eficiente para Linux que faz exatamente o que você pediu:
+Toda vez que o IP 192.168.255.254 parar de responder (ping falhar), ele executa:
+Bashsudo wg-quick down wg0 && sudo wg-quick up wg0
+Script: wg-watchdog.sh
+Bash#!/bin/bash
+# =============================================
+# WireGuard Watchdog - Reinicia wg0 quando o gateway parar de responder
+# Alvo: 192.168.255.254
+# =============================================
+
+IP_ALVO="192.168.255.254"
+INTERFACE="wg0"
+INTERVALO=30          # segundos entre verificações
+TENTATIVAS=3          # quantas tentativas de ping antes de considerar caído
+TIMEOUT=2             # timeout por ping (segundos)
+LOG_FILE="/var/log/wg-watchdog.log"
+
+echo "$(date '+%Y-%m-%d %H:%M:%S') - Watchdog iniciado para $IP_ALVO" | tee -a "$LOG_FILE"
+
+while true; do
+    if ping -c "$TENTATIVAS" -W "$TIMEOUT" -q "$IP_ALVO" >/dev/null 2>&1; then
+        # Tudo ok
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - $IP_ALVO respondendo normalmente" >> "$LOG_FILE"
+    else
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - $IP_ALVO NÃO respondeu após $TENTATIVAS tentativas. Reiniciando WireGuard..." | tee -a "$LOG_FILE"
+        
+        sudo wg-quick down "$INTERFACE" 2>&1 | tee -a "$LOG_FILE"
+        sleep 2
+        sudo wg-quick up "$INTERFACE" 2>&1 | tee -a "$LOG_FILE"
+        
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - Reinício do wg0 concluído." | tee -a "$LOG_FILE"
+    fi
+
+    sleep "$INTERVALO"
+done
+Como usar:
+
+Salve o script:Bashnano ~/wg-watchdog.sh(cole o conteúdo acima)
+Dê permissão de execução:Bashchmod +x ~/wg-watchdog.sh
+Mova para um local adequado (opcional):Bashsudo mv ~/wg-watchdog.sh /usr/local/bin/wg-watchdog.sh
+Execute o script:Bashsudo /usr/local/bin/wg-watchdog.shOu em background:Bashnohup sudo /usr/local/bin/wg-watchdog.sh >> /var/log/wg-watchdog.log 2>&1 &
+
+Recomendado: Rodar como serviço systemd (mais estável)
+Crie o arquivo de serviço:
+sudo nano /etc/systemd/system/wg-watchdog.service
+
+#Cole isso:
+
+ini[Unit]
+Description=WireGuard Watchdog - Reinicia wg0 quando 192.168.255.254 cair
+After=network.target wg-quick@wg0.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/wg-watchdog.sh
+Restart=always
+RestartSec=5
+User=root
+StandardOutput=append:/var/log/wg-watchdog.log
+StandardError=append:/var/log/wg-watchdog.log
+
+[Install]
+WantedBy=multi-user.target
+
+#Ative o serviço:
+sudo systemctl daemon-reload
+sudo systemctl enable --now wg-watchdog.service
+sudo systemctl status wg-watchdog.service
+
+#Dicas extras:
+
+Você pode ajustar INTERVALO, TENTATIVAS e TIMEOUT conforme sua necessidade.
+Se quiser monitorar o handshake do WireGuard em vez de ping (mais confiável em alguns casos), me avise que faço outra versão.
+Verifique os logs com: tail -f /var/log/wg-watchdog.log
+
+Quer que eu faça alguma modificação?
+Exemplos:
+
+Reiniciar só se falhar X vezes seguidas
+Versão baseada em handshake (wg show)
+Enviar notificação por Telegram/Discord quando reiniciar
+
+É só falar!1,3senviar notificação pelo telegramAqui está a versão atualizada do script com notificação pelo Telegram toda vez que o WireGuard for reiniciado.
+1. Primeiro, configure seu Bot do Telegram
+
+Abra o Telegram e converse com o @BotFather
+Envie /newbot
+Escolha um nome e um username (tem que terminar com _bot)
+Copie o TOKEN que ele vai te dar (exemplo: 7123456789:AAF1234567890abcdefghiJKLmnopqrstuv)
+Inicie uma conversa com o seu bot (clique em "Iniciar" ou envie /start)
+Para pegar seu CHAT_ID:
+Envie qualquer mensagem para o bot
+Acesse no navegador:
+https://api.telegram.org/botSEU_TOKEN_AQUI/getUpdates
+Procure por "id" dentro de "chat". Esse número é o seu CHAT_ID (normalmente positivo se for conversa privada).
+
+
+
+2. Script atualizado com Telegram (wg-watchdog.sh)
+Bash#!/bin/bash
+# =============================================
+# WireGuard Watchdog + Notificação Telegram
+# =============================================
+
+IP_ALVO="192.168.255.254"
+INTERFACE="wg0"
+INTERVALO=30
+TENTATIVAS=3
+TIMEOUT=2
+LOG_FILE="/var/log/wg-watchdog.log"
+
+# ================== CONFIGURAÇÃO TELEGRAM ==================
+TELEGRAM_TOKEN="SEU_TOKEN_AQUI"          # ← Troque pelo seu token
+TELEGRAM_CHAT_ID="SEU_CHAT_ID_AQUI"      # ← Troque pelo seu chat_id
+# ===========================================================
+
+# Função para enviar mensagem no Telegram
+enviar_telegram() {
+    local mensagem="$1"
+    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+        -d chat_id="${TELEGRAM_CHAT_ID}" \
+        -d text="${mensagem}" \
+        -d parse_mode="HTML" > /dev/null
+}
+
+echo "$(date '+%Y-%m-%d %H:%M:%S') - Watchdog iniciado para $IP_ALVO" | tee -a "$LOG_FILE"
+
+while true; do
+    if ping -c "$TENTATIVAS" -W "$TIMEOUT" -q "$IP_ALVO" >/dev/null 2>&1; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - $IP_ALVO respondendo normalmente" >> "$LOG_FILE"
+    else
+        TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+        MENSAGEM="⚠️ <b>WireGuard Reiniciado</b>
+
+IP alvo: <code>$IP_ALVO</code>
+Interface: <code>$INTERFACE</code>
+Data/Hora: <code>$TIMESTAMP</code>
+
+O gateway parou de responder. Interface wg0 foi reiniciada."
+
+        echo "$TIMESTAMP - $IP_ALVO NÃO respondeu. Reiniciando WireGuard..." | tee -a "$LOG_FILE"
+
+        # Reinicia o WireGuard
+        sudo wg-quick down "$INTERFACE" 2>&1 | tee -a "$LOG_FILE"
+        sleep 3
+        sudo wg-quick up "$INTERFACE" 2>&1 | tee -a "$LOG_FILE"
+
+        echo "$TIMESTAMP - Reinício do wg0 concluído." | tee -a "$LOG_FILE"
+
+        # Envia notificação no Telegram
+        enviar_telegram "$MENSAGEM"
+    fi
+
+    sleep "$INTERVALO"
+done
+Como configurar:
+
+Salve o script (sudo nano /usr/local/bin/wg-watchdog.sh)
+Cole o código acima
+Substitua:
+SEU_TOKEN_AQUI
+SEU_CHAT_ID_AQUI
+
+Dê permissão:Bashsudo chmod +x /usr/local/bin/wg-watchdog.sh
+Se estiver usando o serviço systemd, atualize o arquivo de serviço se necessário e reinicie:
+
+Bashsudo systemctl restart wg-watchdog.service
