@@ -1,0 +1,18 @@
+
+#Você pode atualizar com este comando abaixo
+curl -sO https://get.glennr.nl/unifi/install/install_latest/unifi-latest.sh && bash unifi-latest.sh
+
+#Se você ver que não está funcionando, você pode separadamente parar o servidor de uso com este comando
+systemctl stop uosserver
+
+#inicie seu controlador de rede novamente com isso
+systemctl start unifi
+
+#Comandos para iniciar/parar as versões é;
+
+systemctl stop uosserver
+systemctl start uosserver
+systemctl stop unifi
+systemctl start unifi
+
+uosserver-purge
