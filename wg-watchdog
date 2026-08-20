@@ -35,8 +35,8 @@ while true; do
 done
 Como usar:
 
-#Salve o script:
-nano ~/wg-watchdog.sh(cole o conteúdo acima)
+#Salve o script:(cole o conteúdo acima)
+nano ~/wg-watchdog.sh
 
 #Dê permissão de execução:
 chmod +x ~/wg-watchdog.sh
