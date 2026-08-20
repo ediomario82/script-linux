@@ -35,10 +35,19 @@ while true; do
 done
 Como usar:
 
-Salve o script:Bashnano ~/wg-watchdog.sh(cole o conteúdo acima)
-Dê permissão de execução:Bashchmod +x ~/wg-watchdog.sh
-Mova para um local adequado (opcional):Bashsudo mv ~/wg-watchdog.sh /usr/local/bin/wg-watchdog.sh
-Execute o script:Bashsudo /usr/local/bin/wg-watchdog.shOu em background:Bashnohup sudo /usr/local/bin/wg-watchdog.sh >> /var/log/wg-watchdog.log 2>&1 &
+#Salve o script:
+nano ~/wg-watchdog.sh(cole o conteúdo acima)
+
+#Dê permissão de execução:
+chmod +x ~/wg-watchdog.sh
+
+#Mova para um local adequado (opcional):
+sudo mv ~/wg-watchdog.sh /usr/local/bin/wg-watchdog.sh
+
+#Execute o script:
+sudo /usr/local/bin/wg-watchdog.sh
+#Ou em background:
+sudo /usr/local/bin/wg-watchdog.sh >> /var/log/wg-watchdog.log 2>&1 &
 
 Recomendado: Rodar como serviço systemd (mais estável)
 Crie o arquivo de serviço:
